@@ -2,31 +2,36 @@ const criteria = [
   {
     title: "Eigene Interpretation / Erklärungsansätze",
     help: "Entwickelt eigenständige Deutungen und macht nachvollziehbar, wie diese aus Text, Material oder Thema entstehen.",
+    levels: ["keine Deutung", "vage Ansätze", "plausibel", "eigenständig", "originell fundiert"],
   },
   {
     title: "Kann im Gespräch eigene Interpretationsansätze entwickeln",
     help: "Greift Impulse auf, denkt sichtbar weiter und kann den eigenen Ansatz im Dialog präzisieren oder erweitern.",
+    levels: ["blockiert", "reagiert knapp", "entwickelt mit", "denkt weiter", "führt souverän"],
   },
   {
     title: "Antworten auf Fragen",
     help: "Reagiert sachbezogen, vollständig und flexibel auf Nachfragen; Unsicherheiten werden reflektiert statt ausgewichen.",
+    levels: ["weicht aus", "teilweise passend", "meist treffend", "klar und flexibel", "präzis und sicher"],
   },
   {
     title: "Argumentationsfähigkeit",
     help: "Begründet Aussagen schlüssig, setzt Belege sinnvoll ein und verbindet Einzelbeobachtungen zu einer tragfähigen Linie.",
+    levels: ["unbegründet", "lose Behauptungen", "nachvollziehbar", "schlüssig belegt", "stringent verknüpft"],
   },
   {
     title: "Sprache",
     help: "Spricht verständlich, präzise und fachsprachlich angemessen; Ausdruck und Struktur unterstützen die Gedankenführung.",
+    levels: ["unklar", "stockend", "verständlich", "präzise", "gewandt"],
   },
 ];
 
 const levels = [
-  { label: "1", value: 1, help: "kaum tragfähig" },
-  { label: "2", value: 2, help: "lückenhaft" },
-  { label: "3", value: 3, help: "solide Basis" },
-  { label: "4", value: 4, help: "überzeugend" },
-  { label: "5", value: 5, help: "eigenständig stark" },
+  { label: "1", value: 1 },
+  { label: "2", value: 2 },
+  { label: "3", value: 3 },
+  { label: "4", value: 4 },
+  { label: "5", value: 5 },
 ];
 
 const gradeRoundingStep = 0.5;
@@ -100,18 +105,19 @@ function renderRows() {
     row.append(title);
 
     levels.forEach((level, levelIndex) => {
+      const levelHelp = criterion.levels[levelIndex];
       const button = document.createElement("button");
       button.type = "button";
       button.className = "score-button";
       button.dataset.criterion = String(criterionIndex);
       button.dataset.level = String(levelIndex);
-      button.title = `${criterion.title}: ${level.label} (${level.help})`;
-      button.setAttribute("aria-label", `${criterion.title}: ${level.label} (${level.help})`);
+      button.title = `${criterion.title}: ${level.label} (${levelHelp})`;
+      button.setAttribute("aria-label", `${criterion.title}: ${level.label} (${levelHelp})`);
       button.setAttribute("aria-pressed", state.scores[criterionIndex] === levelIndex ? "true" : "false");
       const scoreNumber = document.createElement("strong");
       scoreNumber.textContent = level.label;
       const scoreText = document.createElement("span");
-      scoreText.textContent = level.help;
+      scoreText.textContent = levelHelp;
       button.append(scoreNumber, scoreText);
       if (state.scores[criterionIndex] === levelIndex) button.classList.add("is-selected");
       row.append(button);
@@ -194,7 +200,7 @@ exportButton.addEventListener("click", () => {
     kriterium: criteria[criterionIndex].title,
     orientierung: criteria[criterionIndex].help,
     punkte: levelIndex === null ? null : levels[levelIndex].value,
-    stufe: levelIndex === null ? null : levels[levelIndex].help,
+    stufe: levelIndex === null ? null : criteria[criterionIndex].levels[levelIndex],
   }));
   const completed = selectedScores.filter((entry) => entry.punkte !== null);
   const average =

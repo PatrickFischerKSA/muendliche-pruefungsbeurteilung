@@ -24,15 +24,15 @@ Die Punkte werden zuerst gemittelt und dann linear ins Schweizer Notensystem umg
 Note = 1 + ((Punktedurchschnitt - 1) * 5 / 4)
 ```
 
-Damit gilt:
+Die Umschreibungen der Werte sind kriterienspezifisch formuliert:
 
-| Punkte | Orientierung |
-| ---: | --- |
-| `1` | kaum tragfähig |
-| `2` | lückenhaft |
-| `3` | solide Basis |
-| `4` | überzeugend |
-| `5` | eigenständig stark |
+| Kriterium | 1 | 2 | 3 | 4 | 5 |
+| --- | --- | --- | --- | --- | --- |
+| Eigene Interpretation / Erklärungsansätze | keine Deutung | vage Ansätze | plausibel | eigenständig | originell fundiert |
+| Gesprächsentwicklung | blockiert | reagiert knapp | entwickelt mit | denkt weiter | führt souverän |
+| Antworten auf Fragen | weicht aus | teilweise passend | meist treffend | klar und flexibel | präzis und sicher |
+| Argumentationsfähigkeit | unbegründet | lose Behauptungen | nachvollziehbar | schlüssig belegt | stringent verknüpft |
+| Sprache | unklar | stockend | verständlich | präzise | gewandt |
 
 Ein Punktedurchschnitt von `1` ergibt Note `1`, ein Punktedurchschnitt von `5` ergibt Note `6`. Die Endnote wird mathematisch auf halbe Noten gerundet.
 
