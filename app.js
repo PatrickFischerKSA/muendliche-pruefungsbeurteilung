@@ -29,13 +29,13 @@ const levels = [
   { label: "5", value: 5, help: "sehr gut erfüllt" },
 ];
 
+const gradeRoundingStep = 0.5;
 const storageKey = "muendliche-pruefungsbeurteilung-v1";
 const state = {
   scores: Array(criteria.length).fill(null),
   studentName: "",
   assessmentDate: "",
   comment: "",
-  rounding: 0.5,
 };
 
 const rowsContainer = document.querySelector("#criteriaRows");
@@ -45,7 +45,6 @@ const averageText = document.querySelector("#averageText");
 const studentName = document.querySelector("#studentName");
 const assessmentDate = document.querySelector("#assessmentDate");
 const comment = document.querySelector("#comment");
-const roundingSelect = document.querySelector("#roundingSelect");
 const clearButton = document.querySelector("#clearButton");
 const exportButton = document.querySelector("#exportButton");
 const printButton = document.querySelector("#printButton");
@@ -79,7 +78,6 @@ function loadState() {
     state.studentName = saved.studentName || "";
     state.assessmentDate = saved.assessmentDate || "";
     state.comment = saved.comment || "";
-    state.rounding = Number(saved.rounding) || 0.5;
   } catch {
     localStorage.removeItem(storageKey);
   }
@@ -136,7 +134,7 @@ function updateResult() {
 
   const average = selectedScores.reduce((sum, score) => sum + score, 0) / completed;
   const swissGrade = pointsToSwissGrade(average);
-  const roundedGrade = roundToStep(swissGrade, state.rounding);
+  const roundedGrade = roundToStep(swissGrade, gradeRoundingStep);
   finalGrade.textContent = formatGrade(roundedGrade);
   averageText.textContent = `Punktedurchschnitt: ${formatGrade(average)} · ungerundet: ${formatGrade(swissGrade)}`;
   document.title = `Note ${formatGrade(roundedGrade)} · Beurteilung mündlicher Prüfungen`;
@@ -146,7 +144,6 @@ function syncForm() {
   studentName.value = state.studentName;
   assessmentDate.value = state.assessmentDate;
   comment.value = state.comment;
-  roundingSelect.value = String(state.rounding);
   renderRows();
   updateResult();
 }
@@ -179,18 +176,11 @@ comment.addEventListener("input", () => {
   saveState();
 });
 
-roundingSelect.addEventListener("change", () => {
-  state.rounding = Number(roundingSelect.value);
-  saveState();
-  updateResult();
-});
-
 clearButton.addEventListener("click", () => {
   state.scores = Array(criteria.length).fill(null);
   state.studentName = "";
   state.assessmentDate = "";
   state.comment = "";
-  state.rounding = 0.5;
   saveState();
   syncForm();
 });
@@ -208,12 +198,13 @@ exportButton.addEventListener("click", () => {
       ? null
       : completed.reduce((sum, entry) => sum + entry.punkte, 0) / completed.length;
   const swissGrade = average === null ? null : pointsToSwissGrade(average);
-  const roundedGrade = swissGrade === null ? null : roundToStep(swissGrade, state.rounding);
+  const roundedGrade = swissGrade === null ? null : roundToStep(swissGrade, gradeRoundingStep);
   const payload = {
     name: state.studentName,
     datum: state.assessmentDate,
     kommentar: state.comment,
-    rundung: state.rounding,
+    rundung: "mathematisch auf halbe Noten",
+    rundungsschritt: gradeRoundingStep,
     punktedurchschnitt: average,
     noteUngerundet: swissGrade,
     note: roundedGrade,

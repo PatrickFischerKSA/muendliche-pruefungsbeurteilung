@@ -333,10 +333,6 @@ textarea:focus {
   font-size: 0.95rem;
 }
 
-.rounding-control {
-  margin-top: auto;
-}
-
 @media (max-width: 760px) {
   .app-shell {
     width: min(100% - 18px, 1180px);
@@ -410,7 +406,7 @@ textarea:focus {
   }
 
   .actions,
-  .rounding-control {
+  .tool-button {
     display: none;
   }
 

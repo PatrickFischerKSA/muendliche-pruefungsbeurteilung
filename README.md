@@ -9,7 +9,7 @@ Statisches, GitHub-Pages-fähiges Formular auf Basis der PDF-Vorlage `Mündliche
 - Kurze Orientierungshilfe zu jedem Kriterium
 - Automatische Umrechnung des Punktedurchschnitts ins Schweizer Notensystem `1` bis `6`
 - Gleichgewichtete Kriterien
-- Einstellbare Rundung: `0.5`, `0.25` oder `0.1`
+- Mathematische Rundung auf halbe Noten
 - Kommentar- und Namensfeld
 - Export der Beurteilung als JSON-Datei
 - Druckansicht beziehungsweise Speichern als PDF über den Browser
@@ -33,7 +33,7 @@ Damit gilt:
 | `4` | gut erfüllt |
 | `5` | sehr gut erfüllt |
 
-Ein Punktedurchschnitt von `1` ergibt Note `1`, ein Punktedurchschnitt von `5` ergibt Note `6`. Die Endnote wird standardmäßig auf halbe Noten gerundet.
+Ein Punktedurchschnitt von `1` ergibt Note `1`, ein Punktedurchschnitt von `5` ergibt Note `6`. Die Endnote wird mathematisch auf halbe Noten gerundet.
 
 ## GitHub Pages
 
