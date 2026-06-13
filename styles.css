@@ -74,22 +74,37 @@ h1 {
 .actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
+.tool-button,
 .icon-button {
-  width: 42px;
+  min-width: 42px;
   height: 42px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: #fff;
   color: var(--ink);
   cursor: pointer;
-  display: grid;
-  place-items: center;
-  font-size: 1.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 12px;
+  font-weight: 700;
+  font-size: 0.9rem;
   line-height: 1;
 }
 
+.icon-button {
+  width: 42px;
+  padding: 0;
+  font-size: 1.35rem;
+}
+
+.tool-button:hover,
+.tool-button:focus-visible,
 .icon-button:hover,
 .icon-button:focus-visible {
   border-color: var(--accent);
@@ -190,12 +205,26 @@ textarea:focus {
   padding: 16px 14px;
   border-right: 1px solid var(--line-strong);
   display: flex;
+  flex-direction: column;
+  gap: 8px;
   align-items: flex-start;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(1.05rem, 1.6vw, 1.45rem);
   line-height: 1.16;
   hyphens: auto;
   overflow-wrap: anywhere;
+}
+
+.criterion-title strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.03rem, 1.45vw, 1.35rem);
+  font-weight: 700;
+}
+
+.criterion-title span {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.35;
 }
 
 .score-button {
@@ -204,27 +233,41 @@ textarea:focus {
   border-left: 1px solid var(--line);
   border-radius: 0;
   background: #fff;
-  color: transparent;
+  color: var(--muted);
   cursor: pointer;
   position: relative;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+  font-size: 1.35rem;
+  font-weight: 800;
 }
 
 .score-button::before {
   content: "";
-  width: 26px;
-  height: 26px;
+  width: 42px;
+  height: 42px;
   border: 2px solid #aeb8bf;
   border-radius: 50%;
   background: #fff;
-  display: block;
-  margin: auto;
+  display: grid;
+  place-items: center;
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
   transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
 }
 
 .score-button:hover::before,
 .score-button:focus-visible::before {
   border-color: var(--accent);
-  transform: scale(1.08);
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.score-button::after {
+  content: attr(data-label);
+  position: relative;
+  z-index: 1;
 }
 
 .score-button:focus-visible {
@@ -234,11 +277,12 @@ textarea:focus {
 
 .score-button.is-selected {
   background: var(--accent-soft);
+  color: #fff;
 }
 
 .score-button.is-selected::before {
   border-color: var(--accent-dark);
-  background: radial-gradient(circle at center, var(--accent) 0 42%, #fff 44% 100%);
+  background: var(--accent);
 }
 
 .lower-grid {
@@ -334,8 +378,12 @@ textarea:focus {
     font-size: 1.75rem;
   }
 
-  .criterion-title {
+  .criterion-title strong {
     font-size: 1rem;
+  }
+
+  .criterion-title span {
+    font-size: 0.8rem;
   }
 }
 

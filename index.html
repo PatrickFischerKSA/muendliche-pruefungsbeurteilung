@@ -19,11 +19,16 @@
             <h1 id="page-title">Prüfungsbeurteilung</h1>
           </div>
           <div class="actions">
-            <button class="icon-button" type="button" id="resetButton" title="Formular zurücksetzen" aria-label="Formular zurücksetzen">
-              ↺
+            <button class="tool-button" type="button" id="clearButton" title="Formular leeren">
+              <span aria-hidden="true">↺</span>
+              Clear
+            </button>
+            <button class="tool-button" type="button" id="exportButton" title="Beurteilung exportieren">
+              ⤓
+              Export
             </button>
             <button class="icon-button" type="button" id="printButton" title="Drucken oder als PDF sichern" aria-label="Drucken oder als PDF sichern">
-              ⤓
+              ⎙
             </button>
           </div>
         </div>
@@ -43,11 +48,11 @@
           <div class="rubric" role="group" aria-label="Bewertungskriterien">
             <div class="rubric-header" aria-hidden="true">
               <span></span>
-              <span>--</span>
-              <span>-</span>
-              <span>0</span>
-              <span>+</span>
-              <span>++</span>
+              <span>1</span>
+              <span>2</span>
+              <span>3</span>
+              <span>4</span>
+              <span>5</span>
             </div>
             <div id="criteriaRows"></div>
           </div>
@@ -65,7 +70,7 @@
               </div>
               <div class="result-details">
                 <span id="progressText">0 von 5 Kriterien bewertet</span>
-                <span id="averageText">Durchschnitt: –</span>
+                <span id="averageText">Punktedurchschnitt: –</span>
               </div>
               <label class="rounding-control">
                 <span>Rundung</span>
