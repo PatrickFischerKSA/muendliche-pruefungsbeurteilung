@@ -6,6 +6,7 @@ Statisches, GitHub-Pages-fähiges Formular auf Basis der PDF-Vorlage `Mündliche
 
 - Fünf Bewertungskriterien aus der Vorlage
 - Klickbares Punkteraster von `1` bis `5`
+- Kurze Umschreibungen der Punktwerte direkt in den Klickfeldern
 - Kurze Orientierungshilfe zu jedem Kriterium
 - Automatische Umrechnung des Punktedurchschnitts ins Schweizer Notensystem `1` bis `6`
 - Gleichgewichtete Kriterien
@@ -27,11 +28,11 @@ Damit gilt:
 
 | Punkte | Orientierung |
 | ---: | --- |
-| `1` | nicht erfüllt |
-| `2` | ansatzweise erfüllt |
-| `3` | grundsätzlich erfüllt |
-| `4` | gut erfüllt |
-| `5` | sehr gut erfüllt |
+| `1` | kaum tragfähig |
+| `2` | lückenhaft |
+| `3` | solide Basis |
+| `4` | überzeugend |
+| `5` | eigenständig stark |
 
 Ein Punktedurchschnitt von `1` ergibt Note `1`, ein Punktedurchschnitt von `5` ergibt Note `6`. Die Endnote wird mathematisch auf halbe Noten gerundet.
 

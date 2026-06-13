@@ -22,11 +22,11 @@ const criteria = [
 ];
 
 const levels = [
-  { label: "1", value: 1, help: "nicht erfüllt" },
-  { label: "2", value: 2, help: "ansatzweise erfüllt" },
-  { label: "3", value: 3, help: "grundsätzlich erfüllt" },
-  { label: "4", value: 4, help: "gut erfüllt" },
-  { label: "5", value: 5, help: "sehr gut erfüllt" },
+  { label: "1", value: 1, help: "kaum tragfähig" },
+  { label: "2", value: 2, help: "lückenhaft" },
+  { label: "3", value: 3, help: "solide Basis" },
+  { label: "4", value: 4, help: "überzeugend" },
+  { label: "5", value: 5, help: "eigenständig stark" },
 ];
 
 const gradeRoundingStep = 0.5;
@@ -105,10 +105,14 @@ function renderRows() {
       button.className = "score-button";
       button.dataset.criterion = String(criterionIndex);
       button.dataset.level = String(levelIndex);
-      button.dataset.label = level.label;
       button.title = `${criterion.title}: ${level.label} (${level.help})`;
       button.setAttribute("aria-label", `${criterion.title}: ${level.label} (${level.help})`);
       button.setAttribute("aria-pressed", state.scores[criterionIndex] === levelIndex ? "true" : "false");
+      const scoreNumber = document.createElement("strong");
+      scoreNumber.textContent = level.label;
+      const scoreText = document.createElement("span");
+      scoreText.textContent = level.help;
+      button.append(scoreNumber, scoreText);
       if (state.scores[criterionIndex] === levelIndex) button.classList.add("is-selected");
       row.append(button);
     });

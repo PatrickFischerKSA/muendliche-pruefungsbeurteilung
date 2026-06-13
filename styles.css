@@ -165,8 +165,8 @@ textarea:focus {
 .rubric-header,
 .criterion-row {
   display: grid;
-  grid-template-columns: minmax(220px, 1.35fr) repeat(5, minmax(82px, 0.6fr));
-  min-width: 720px;
+  grid-template-columns: minmax(240px, 1.25fr) repeat(5, minmax(116px, 0.72fr));
+  min-width: 860px;
 }
 
 .rubric-header {
@@ -181,6 +181,7 @@ textarea:focus {
   min-height: 48px;
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 10px 12px;
   border-left: 1px solid var(--line);
   color: var(--ink);
@@ -190,6 +191,7 @@ textarea:focus {
 
 .rubric-header span:first-child {
   border-left: 0;
+  justify-content: flex-start;
 }
 
 .criterion-row {
@@ -236,38 +238,67 @@ textarea:focus {
   color: var(--muted);
   cursor: pointer;
   position: relative;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   isolation: isolate;
-  font-size: 1.35rem;
-  font-weight: 800;
+  padding: 14px 10px;
+  text-align: center;
 }
 
 .score-button::before {
   content: "";
-  width: 42px;
-  height: 42px;
+  position: absolute;
+  inset: 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  pointer-events: none;
+  transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+}
+
+.score-button strong,
+.score-button span {
+  position: relative;
+  z-index: 1;
+}
+
+.score-button strong {
+  width: 38px;
+  height: 38px;
   border: 2px solid #aeb8bf;
   border-radius: 50%;
   background: #fff;
-  display: grid;
-  place-items: center;
-  position: absolute;
-  inset: 50% auto auto 50%;
-  transform: translate(-50%, -50%);
-  transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.score-button span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.15;
+  max-width: 9ch;
+  overflow-wrap: anywhere;
+}
+
+.score-button:hover strong,
+.score-button:focus-visible strong {
+  border-color: var(--accent);
+  transform: scale(1.06);
 }
 
 .score-button:hover::before,
 .score-button:focus-visible::before {
-  border-color: var(--accent);
-  transform: translate(-50%, -50%) scale(1.08);
-}
-
-.score-button::after {
-  content: attr(data-label);
-  position: relative;
-  z-index: 1;
+  border-color: var(--accent-soft);
+  background: rgba(220, 239, 235, 0.45);
 }
 
 .score-button:focus-visible {
@@ -277,12 +308,16 @@ textarea:focus {
 
 .score-button.is-selected {
   background: var(--accent-soft);
+}
+
+.score-button.is-selected strong {
+  border-color: var(--accent-dark);
+  background: var(--accent);
   color: #fff;
 }
 
-.score-button.is-selected::before {
-  border-color: var(--accent-dark);
-  background: var(--accent);
+.score-button.is-selected span {
+  color: var(--accent-dark);
 }
 
 .lower-grid {
@@ -359,13 +394,13 @@ textarea:focus {
 
   .rubric-header,
   .criterion-row {
-    grid-template-columns: minmax(180px, 1.2fr) repeat(5, minmax(70px, 0.52fr));
-    min-width: 560px;
+    grid-template-columns: minmax(190px, 1.15fr) repeat(5, minmax(104px, 0.62fr));
+    min-width: 710px;
   }
 
   .criterion-title,
   .score-button {
-    min-height: 112px;
+    min-height: 124px;
   }
 }
 
@@ -380,6 +415,10 @@ textarea:focus {
 
   .criterion-title span {
     font-size: 0.8rem;
+  }
+
+  .score-button span {
+    font-size: 0.72rem;
   }
 }
 
@@ -426,7 +465,6 @@ textarea:focus {
   }
 
   .score-button::before {
-    width: 20px;
-    height: 20px;
+    inset: 8px;
   }
 }
