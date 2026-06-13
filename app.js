@@ -62,6 +62,10 @@ function roundToStep(value, step) {
   return Math.round(value / step) * step;
 }
 
+function pointsToSwissGrade(pointsAverage) {
+  return 1 + ((pointsAverage - 1) * 5) / 4;
+}
+
 function saveState() {
   localStorage.setItem(storageKey, JSON.stringify(state));
 }
@@ -131,9 +135,10 @@ function updateResult() {
   }
 
   const average = selectedScores.reduce((sum, score) => sum + score, 0) / completed;
-  const roundedGrade = roundToStep(average, state.rounding);
+  const swissGrade = pointsToSwissGrade(average);
+  const roundedGrade = roundToStep(swissGrade, state.rounding);
   finalGrade.textContent = formatGrade(roundedGrade);
-  averageText.textContent = `Punktedurchschnitt: ${formatGrade(average)}`;
+  averageText.textContent = `Punktedurchschnitt: ${formatGrade(average)} · ungerundet: ${formatGrade(swissGrade)}`;
   document.title = `Note ${formatGrade(roundedGrade)} · Beurteilung mündlicher Prüfungen`;
 }
 
@@ -202,13 +207,15 @@ exportButton.addEventListener("click", () => {
     completed.length === 0
       ? null
       : completed.reduce((sum, entry) => sum + entry.punkte, 0) / completed.length;
-  const roundedGrade = average === null ? null : roundToStep(average, state.rounding);
+  const swissGrade = average === null ? null : pointsToSwissGrade(average);
+  const roundedGrade = swissGrade === null ? null : roundToStep(swissGrade, state.rounding);
   const payload = {
     name: state.studentName,
     datum: state.assessmentDate,
     kommentar: state.comment,
     rundung: state.rounding,
     punktedurchschnitt: average,
+    noteUngerundet: swissGrade,
     note: roundedGrade,
     kriterien: selectedScores,
     exportiertAm: new Date().toISOString(),

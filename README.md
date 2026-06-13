@@ -7,7 +7,7 @@ Statisches, GitHub-Pages-fähiges Formular auf Basis der PDF-Vorlage `Mündliche
 - Fünf Bewertungskriterien aus der Vorlage
 - Klickbares Punkteraster von `1` bis `5`
 - Kurze Orientierungshilfe zu jedem Kriterium
-- Automatische Notenberechnung auf Basis des Punktedurchschnitts
+- Automatische Umrechnung des Punktedurchschnitts ins Schweizer Notensystem `1` bis `6`
 - Gleichgewichtete Kriterien
 - Einstellbare Rundung: `0.5`, `0.25` oder `0.1`
 - Kommentar- und Namensfeld
@@ -17,7 +17,13 @@ Statisches, GitHub-Pages-fähiges Formular auf Basis der PDF-Vorlage `Mündliche
 
 ## Berechnung
 
-Die Punkte werden direkt übernommen:
+Die Punkte werden zuerst gemittelt und dann linear ins Schweizer Notensystem umgerechnet:
+
+```text
+Note = 1 + ((Punktedurchschnitt - 1) * 5 / 4)
+```
+
+Damit gilt:
 
 | Punkte | Orientierung |
 | ---: | --- |
@@ -27,7 +33,7 @@ Die Punkte werden direkt übernommen:
 | `4` | gut erfüllt |
 | `5` | sehr gut erfüllt |
 
-Die Endnote ist der Durchschnitt aller bewerteten Kriterien und wird standardmäßig auf halbe Punkte gerundet.
+Ein Punktedurchschnitt von `1` ergibt Note `1`, ein Punktedurchschnitt von `5` ergibt Note `6`. Die Endnote wird standardmäßig auf halbe Noten gerundet.
 
 ## GitHub Pages
 
