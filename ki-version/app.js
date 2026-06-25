@@ -435,8 +435,7 @@ function clearForm() {
 }
 
 function initEndpointDefault() {
-  const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
-  if (localHosts.has(window.location.hostname) && !els.endpointUrl.value) {
+  if (["http:", "https:"].includes(window.location.protocol) && !els.endpointUrl.value) {
     els.endpointUrl.value = `${window.location.origin}/api/muendliche-pruefung`;
   }
 }

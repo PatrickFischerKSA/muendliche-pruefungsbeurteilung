@@ -23,6 +23,14 @@ Wenn das mitgelieferte Backend aus diesem Repository läuft, lautet der Endpunkt
 http://localhost:8787/api/muendliche-pruefung
 ```
 
+Auf Vercel wird der Endpunkt automatisch aus der aktuellen Domain gesetzt:
+
+```text
+/api/muendliche-pruefung
+```
+
+Der OpenAI API-Key muss in Vercel als Environment Variable `OPENAI_API_KEY` gesetzt werden. Er darf nicht im Frontend oder Repository gespeichert werden.
+
 ## Erwartete Backend-Antwort
 
 Für `task=transcribe`:

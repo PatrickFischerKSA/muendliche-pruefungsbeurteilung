@@ -21,7 +21,7 @@ const upload = multer({
   },
 });
 
-const app = express();
+export const app = express();
 
 app.use(
   cors({
@@ -309,6 +309,8 @@ app.use((error, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Mündliche Prüfungsbeurteilung läuft auf http://localhost:${PORT}`);
-});
+if (!process.env.VERCEL && process.argv[1] === fileURLToPath(import.meta.url)) {
+  app.listen(PORT, () => {
+    console.log(`Mündliche Prüfungsbeurteilung läuft auf http://localhost:${PORT}`);
+  });
+}
