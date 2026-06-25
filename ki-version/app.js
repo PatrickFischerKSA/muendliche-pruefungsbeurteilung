@@ -164,10 +164,24 @@ function stopTimer() {
   state.timerId = null;
 }
 
+function getRecordingSupport() {
+  return {
+    hasMediaDevices: typeof navigator !== "undefined" && Boolean(navigator.mediaDevices),
+    hasGetUserMedia: typeof navigator !== "undefined" && Boolean(navigator.mediaDevices?.getUserMedia),
+    hasMediaRecorder: typeof window !== "undefined" && Boolean(window.MediaRecorder),
+    isSecureContext: typeof window !== "undefined" && Boolean(window.isSecureContext),
+  };
+}
+
 async function startRecording({ integrated = false } = {}) {
-  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
-    setStatus("Audioaufnahme wird von diesem Browser nicht unterstützt.", true);
-    return;
+  const support = getRecordingSupport();
+  if (!support.hasGetUserMedia || !support.hasMediaRecorder) {
+    setStatus("Audioaufnahme wird von diesem Browser nicht unterstützt oder ist hier blockiert.", true);
+    return false;
+  }
+  if (!support.isSecureContext) {
+    setStatus("Audioaufnahme braucht HTTPS oder localhost.", true);
+    return false;
   }
 
   try {
