@@ -9,6 +9,7 @@ Diese zweite Version erweitert die manuelle Beurteilung um:
 - Transkriptfeld mit optionalem Live-Transkript über die Browser-Spracherkennung
 - Vorbereitung für Transkription und KI-Bewertung über einen Backend-Endpunkt
 - Bewertung nach denselben fünf Kriterien wie die erste Fassung
+- Bewertung mit hinterlegten Interpretationsparadigmen zu Argumentationslehre und literarischer Textkommentierung
 - Export als JSON
 
 ## Wichtiger Architekturhinweis

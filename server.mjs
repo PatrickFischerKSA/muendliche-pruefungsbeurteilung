@@ -4,6 +4,7 @@ import cors from "cors";
 import multer from "multer";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { interpretationParadigms } from "./interpretationsparadigmen.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -168,6 +169,11 @@ function buildEvaluationPrompt({ transcript, passageText, workText, taskNotes, c
         "",
         "Kriterien mit Wertbeschreibungen:",
         JSON.stringify(criteria, null, 2),
+        "",
+        "Interpretationsparadigmen als fachlicher Hintergrund:",
+        JSON.stringify(interpretationParadigms, null, 2),
+        "",
+        "Nutze diese Paradigmen als Bewertungsfolie: Die Kommentare sollen sichtbar machen, ob die gepruefte Person textnah interpretiert, tragfaehig argumentiert, relevante Kontexte einbezieht und Fehlschluesse vermeidet. Bewerte aber weiterhin nur nach den fuenf vorgegebenen Kriterien.",
         "",
         "Aufgaben-/Kontextnotizen:",
         taskNotes || "Keine.",

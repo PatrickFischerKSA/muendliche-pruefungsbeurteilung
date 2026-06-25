@@ -17,6 +17,7 @@ Statisches, GitHub-Pages-fähiges Formular auf Basis der PDF-Vorlage `Mündliche
 - Lokales Zwischenspeichern im Browser
 - Zweite Version mit Upload, Aufnahme, Transkript und Backend-Anschluss unter `ki-version/`
 - Material-Upload in der KI-Version für PDF und Word (`.docx`, `.doc`)
+- KI-Bewertung mit hinterlegten Interpretationsparadigmen zu Argumentationslehre und literarischer Textkommentierung
 
 ## Backend starten
 
