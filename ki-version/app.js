@@ -434,6 +434,13 @@ function clearForm() {
   setStatus("Formular geleert.");
 }
 
+function initEndpointDefault() {
+  const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
+  if (localHosts.has(window.location.hostname) && !els.endpointUrl.value) {
+    els.endpointUrl.value = `${window.location.origin}/api/muendliche-pruefung`;
+  }
+}
+
 els.passageFile.addEventListener("change", updateFileLabels);
 els.workFile.addEventListener("change", updateFileLabels);
 els.startExamButton.addEventListener("click", startIntegratedExam);
@@ -447,5 +454,6 @@ els.exportButton.addEventListener("click", exportData);
 els.clearButton.addEventListener("click", clearForm);
 
 initSpeechRecognition();
+initEndpointDefault();
 updateFileLabels();
 renderEmptyRubric();

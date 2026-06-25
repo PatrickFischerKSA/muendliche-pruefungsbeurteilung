@@ -17,6 +17,12 @@ Eine reine GitHub-Pages-Seite kann aufnehmen und Dateien auswählen, aber sie so
 
 Die Seite sendet `multipart/form-data` an den eingetragenen Endpunkt. Im integrierten Ablauf wird nach `Prüfung beenden & auswerten` zuerst `task=transcribe` und danach automatisch `task=evaluate` aufgerufen.
 
+Wenn das mitgelieferte Backend aus diesem Repository läuft, lautet der Endpunkt:
+
+```text
+http://localhost:8787/api/muendliche-pruefung
+```
+
 ## Erwartete Backend-Antwort
 
 Für `task=transcribe`:

@@ -17,6 +17,22 @@ Statisches, GitHub-Pages-fähiges Formular auf Basis der PDF-Vorlage `Mündliche
 - Lokales Zwischenspeichern im Browser
 - Zweite Version mit Upload, Aufnahme, Transkript und Backend-Anschluss unter `ki-version/`
 
+## Backend starten
+
+Für Transkription und KI-Bewertung braucht die KI-Version ein Backend:
+
+```bash
+cp .env.example .env
+npm install
+npm start
+```
+
+Danach in der KI-Version als Backend-Endpunkt eintragen:
+
+```text
+http://localhost:8787/api/muendliche-pruefung
+```
+
 ## Berechnung
 
 Die Punkte werden zuerst gemittelt und dann linear ins Schweizer Notensystem umgerechnet:
