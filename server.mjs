@@ -107,6 +107,17 @@ async function extractTextFromFile(file) {
     }
   }
 
+  if (mime === "application/msword" || lower.endsWith(".doc")) {
+    try {
+      const { default: WordExtractor } = await import("word-extractor");
+      const extractor = new WordExtractor();
+      const parsed = await extractor.extract(file.buffer);
+      return parsed.getBody() || "";
+    } catch (error) {
+      return `[DOC konnte nicht extrahiert werden: ${error.message}]`;
+    }
+  }
+
   return `[${name || "Datei"}: Text konnte nicht automatisch extrahiert werden.]`;
 }
 

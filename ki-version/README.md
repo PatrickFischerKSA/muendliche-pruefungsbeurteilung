@@ -2,8 +2,8 @@
 
 Diese zweite Version erweitert die manuelle Beurteilung um:
 
-- Upload für Textstelle
-- Upload für das gesamte Werk
+- Upload für Textstelle als PDF oder Word-Datei (`.docx`, `.doc`)
+- Upload für das gesamte Werk als PDF oder Word-Datei (`.docx`, `.doc`)
 - integrierter Prüfungsablauf: Starten, Stoppen, automatische Transkription und Bewertung
 - Audioaufnahme im Browser
 - Transkriptfeld mit optionalem Live-Transkript über die Browser-Spracherkennung

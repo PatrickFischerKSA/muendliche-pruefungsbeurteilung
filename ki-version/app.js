@@ -137,7 +137,9 @@ function renderAssessment(assessment = []) {
 function fileLabel(file) {
   if (!file) return "Keine Datei gewählt.";
   const size = `${Math.round(file.size / 1024)} KB`;
-  return `${file.name} · ${size}`;
+  const lower = file.name.toLowerCase();
+  const kind = lower.endsWith(".pdf") ? "PDF" : lower.endsWith(".doc") || lower.endsWith(".docx") ? "Word" : "Datei";
+  return `${file.name} · ${kind} · ${size}`;
 }
 
 function updateFileLabels() {
