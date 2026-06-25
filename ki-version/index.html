@@ -66,24 +66,28 @@
 
           <section class="panel recorder-panel" aria-labelledby="record-title">
             <div class="panel-header">
-              <h2 id="record-title">Aufnahme</h2>
+              <h2 id="record-title">Prüfungsablauf</h2>
               <div class="timer" id="timer">00:00</div>
             </div>
+            <div class="workflow-controls">
+              <button type="button" id="startExamButton">Prüfung starten</button>
+              <button type="button" id="finishExamButton" disabled>Prüfung beenden & auswerten</button>
+            </div>
             <div class="record-controls">
-              <button type="button" id="recordButton">Aufnahme starten</button>
-              <button type="button" id="stopButton" disabled>Stoppen</button>
-              <button type="button" id="speechButton">Live-Transkript</button>
+              <button type="button" id="recordButton">Nur Aufnahme starten</button>
+              <button type="button" id="stopButton" disabled>Nur Aufnahme stoppen</button>
+              <button type="button" id="speechButton">Nur Live-Transkript</button>
             </div>
             <audio id="audioPlayer" controls></audio>
-            <p class="hint" id="speechHint">Live-Transkript nutzt die Spracherkennung des Browsers, falls verfügbar.</p>
+            <p class="hint" id="speechHint">Der integrierte Ablauf nimmt Audio auf, schreibt nach Möglichkeit live mit und sendet nach dem Stoppen automatisch an den Backend-Endpunkt.</p>
           </section>
 
           <section class="panel transcript-panel" aria-labelledby="transcript-title">
             <h2 id="transcript-title">Transkript</h2>
             <textarea id="transcript" rows="12" placeholder="Transkript erscheint hier oder kann manuell eingefügt werden."></textarea>
             <div class="inline-actions">
-              <button type="button" id="transcribeButton">Audio transkribieren</button>
-              <button type="button" id="evaluateButton">Transkript bewerten</button>
+              <button type="button" id="transcribeButton">Nur Audio transkribieren</button>
+              <button type="button" id="evaluateButton">Nur Transkript bewerten</button>
             </div>
           </section>
 

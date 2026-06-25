@@ -49,6 +49,8 @@ const els = {
   passageInfo: document.querySelector("#passageInfo"),
   workInfo: document.querySelector("#workInfo"),
   taskNotes: document.querySelector("#taskNotes"),
+  startExamButton: document.querySelector("#startExamButton"),
+  finishExamButton: document.querySelector("#finishExamButton"),
   recordButton: document.querySelector("#recordButton"),
   stopButton: document.querySelector("#stopButton"),
   speechButton: document.querySelector("#speechButton"),
@@ -162,7 +164,7 @@ function stopTimer() {
   state.timerId = null;
 }
 
-async function startRecording() {
+async function startRecording({ integrated = false } = {}) {
   if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
     setStatus("Audioaufnahme wird von diesem Browser nicht unterstützt.", true);
     return;
@@ -185,19 +187,33 @@ async function startRecording() {
     state.mediaRecorder.start();
     els.recordButton.disabled = true;
     els.stopButton.disabled = false;
+    els.startExamButton.disabled = true;
+    els.finishExamButton.disabled = false;
     startTimer();
-    setStatus("Aufnahme läuft.");
+    setStatus(integrated ? "Prüfung läuft: Audioaufnahme und Auswertungsvorbereitung aktiv." : "Aufnahme läuft.");
+    return true;
   } catch (error) {
     setStatus(`Mikrofonzugriff fehlgeschlagen: ${error.message}`, true);
+    return false;
   }
 }
 
 function stopRecording() {
-  if (!state.mediaRecorder || state.mediaRecorder.state === "inactive") return;
-  state.mediaRecorder.stop();
-  els.recordButton.disabled = false;
-  els.stopButton.disabled = true;
-  stopTimer();
+  return new Promise((resolve) => {
+    if (!state.mediaRecorder || state.mediaRecorder.state === "inactive") {
+      resolve(false);
+      return;
+    }
+
+    const recorder = state.mediaRecorder;
+    recorder.addEventListener("stop", () => resolve(true), { once: true });
+    recorder.stop();
+    els.recordButton.disabled = false;
+    els.stopButton.disabled = true;
+    els.startExamButton.disabled = false;
+    els.finishExamButton.disabled = true;
+    stopTimer();
+  });
 }
 
 function initSpeechRecognition() {
@@ -237,6 +253,26 @@ function toggleSpeechRecognition() {
     els.speechButton.textContent = "Live-Transkript";
     setStatus("Live-Transkript gestoppt.");
   }
+}
+
+function startSpeechRecognitionForExam() {
+  if (!state.recognition || state.recognizing) return false;
+  try {
+    state.recognizing = true;
+    state.recognition.start();
+    els.speechButton.textContent = "Live-Transkript stoppen";
+    return true;
+  } catch {
+    state.recognizing = false;
+    return false;
+  }
+}
+
+function stopSpeechRecognitionForExam() {
+  if (!state.recognition || !state.recognizing) return;
+  state.recognizing = false;
+  state.recognition.stop();
+  els.speechButton.textContent = "Nur Live-Transkript";
 }
 
 function ensureEndpoint() {
@@ -290,6 +326,7 @@ async function transcribeAudio() {
   if (!result) return;
   if (result.transcript) els.transcript.value = result.transcript;
   setStatus("Transkription übernommen.");
+  return result;
 }
 
 async function evaluateTranscript() {
@@ -306,6 +343,40 @@ async function evaluateTranscript() {
   }
   renderAssessment(result.assessment || result.bewertung || []);
   setStatus("Bewertung übernommen. Bitte fachlich prüfen, bevor sie verwendet wird.");
+  return result;
+}
+
+async function startIntegratedExam() {
+  const endpoint = ensureEndpoint();
+  if (!endpoint) return;
+
+  const recordingStarted = await startRecording({ integrated: true });
+  if (!recordingStarted) return;
+
+  const speechStarted = startSpeechRecognitionForExam();
+  setStatus(
+    speechStarted
+      ? "Prüfung läuft: Audio wird aufgenommen, Live-Transkript läuft mit."
+      : "Prüfung läuft: Audio wird aufgenommen. Live-Transkript ist in diesem Browser nicht verfügbar."
+  );
+}
+
+async function finishIntegratedExam() {
+  els.finishExamButton.disabled = true;
+  stopSpeechRecognitionForExam();
+  const stopped = await stopRecording();
+
+  if (!stopped && !state.audioBlob && !els.transcript.value.trim()) {
+    setStatus("Keine Aufnahme und kein Transkript vorhanden.", true);
+    return;
+  }
+
+  if (state.audioBlob) {
+    const transcription = await transcribeAudio();
+    if (!transcription && !els.transcript.value.trim()) return;
+  }
+
+  await evaluateTranscript();
 }
 
 function exportData() {
@@ -340,6 +411,10 @@ function clearForm() {
   state.result = null;
   els.audioPlayer.removeAttribute("src");
   els.timer.textContent = "00:00";
+  els.recordButton.disabled = false;
+  els.stopButton.disabled = true;
+  els.startExamButton.disabled = false;
+  els.finishExamButton.disabled = true;
   updateFileLabels();
   renderEmptyRubric();
   setStatus("Formular geleert.");
@@ -347,6 +422,8 @@ function clearForm() {
 
 els.passageFile.addEventListener("change", updateFileLabels);
 els.workFile.addEventListener("change", updateFileLabels);
+els.startExamButton.addEventListener("click", startIntegratedExam);
+els.finishExamButton.addEventListener("click", finishIntegratedExam);
 els.recordButton.addEventListener("click", startRecording);
 els.stopButton.addEventListener("click", stopRecording);
 els.speechButton.addEventListener("click", toggleSpeechRecognition);

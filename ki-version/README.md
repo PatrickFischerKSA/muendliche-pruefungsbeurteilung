@@ -4,6 +4,7 @@ Diese zweite Version erweitert die manuelle Beurteilung um:
 
 - Upload für Textstelle
 - Upload für das gesamte Werk
+- integrierter Prüfungsablauf: Starten, Stoppen, automatische Transkription und Bewertung
 - Audioaufnahme im Browser
 - Transkriptfeld mit optionalem Live-Transkript über die Browser-Spracherkennung
 - Vorbereitung für Transkription und KI-Bewertung über einen Backend-Endpunkt
@@ -14,7 +15,7 @@ Diese zweite Version erweitert die manuelle Beurteilung um:
 
 Eine reine GitHub-Pages-Seite kann aufnehmen und Dateien auswählen, aber sie sollte keine API-Schlüssel enthalten. Transkription und KI-Bewertung müssen deshalb über einen eigenen Backend-Endpunkt laufen.
 
-Die Seite sendet `multipart/form-data` an den eingetragenen Endpunkt.
+Die Seite sendet `multipart/form-data` an den eingetragenen Endpunkt. Im integrierten Ablauf wird nach `Prüfung beenden & auswerten` zuerst `task=transcribe` und danach automatisch `task=evaluate` aufgerufen.
 
 ## Erwartete Backend-Antwort
 

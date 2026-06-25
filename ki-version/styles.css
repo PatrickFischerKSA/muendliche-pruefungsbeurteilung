@@ -47,7 +47,8 @@ textarea {
 .topbar,
 .panel-header,
 .inline-actions,
-.record-controls {
+.record-controls,
+.workflow-controls {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -111,6 +112,25 @@ button:focus-visible,
 button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+#startExamButton,
+#finishExamButton {
+  min-height: 52px;
+  padding: 0 18px;
+  font-size: 1rem;
+}
+
+#startExamButton {
+  background: var(--accent);
+  border-color: var(--accent-dark);
+  color: #fff;
+}
+
+#finishExamButton {
+  background: #fff8f0;
+  border-color: #d5a36e;
+  color: #6b3d12;
 }
 
 .status-strip {
@@ -224,9 +244,19 @@ audio {
 }
 
 .inline-actions,
-.record-controls {
+.record-controls,
+.workflow-controls {
   flex-wrap: wrap;
   margin-top: 12px;
+}
+
+.workflow-controls {
+  align-items: stretch;
+}
+
+.record-controls {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
 }
 
 .final-grade {
