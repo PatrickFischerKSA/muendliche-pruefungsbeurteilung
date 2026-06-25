@@ -1,0 +1,45 @@
+# KI-Version der mündlichen Prüfungsbeurteilung
+
+Diese zweite Version erweitert die manuelle Beurteilung um:
+
+- Upload für Textstelle
+- Upload für das gesamte Werk
+- Audioaufnahme im Browser
+- Transkriptfeld mit optionalem Live-Transkript über die Browser-Spracherkennung
+- Vorbereitung für Transkription und KI-Bewertung über einen Backend-Endpunkt
+- Bewertung nach denselben fünf Kriterien wie die erste Fassung
+- Export als JSON
+
+## Wichtiger Architekturhinweis
+
+Eine reine GitHub-Pages-Seite kann aufnehmen und Dateien auswählen, aber sie sollte keine API-Schlüssel enthalten. Transkription und KI-Bewertung müssen deshalb über einen eigenen Backend-Endpunkt laufen.
+
+Die Seite sendet `multipart/form-data` an den eingetragenen Endpunkt.
+
+## Erwartete Backend-Antwort
+
+Für `task=transcribe`:
+
+```json
+{
+  "transcript": "..."
+}
+```
+
+Für `task=evaluate`:
+
+```json
+{
+  "transcript": "...",
+  "overallComment": "...",
+  "assessment": [
+    {
+      "criterion": "Eigene Interpretation / Erklärungsansätze",
+      "score": 4,
+      "comment": "Kurze Begründung mit Bezug auf das Transkript."
+    }
+  ]
+}
+```
+
+Die Punktwerte bleiben `1` bis `5`; daraus wird im Frontend die Schweizer Note `1` bis `6` mit mathematischer Rundung auf halbe Noten berechnet.

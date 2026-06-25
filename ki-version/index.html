@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>KI-gestützte Prüfungsbeurteilung</title>
+    <meta
+      name="description"
+      content="Zweite Version der mündlichen Prüfungsbeurteilung mit Uploads, Audioaufnahme, Transkript und KI-Auswertung."
+    >
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace" aria-labelledby="page-title">
+        <div class="topbar">
+          <div>
+            <p class="eyebrow">Mündliche Prüfung · KI-Version</p>
+            <h1 id="page-title">Prüfungsaufnahme und Bewertung</h1>
+          </div>
+          <a class="back-link" href="../index.html">Manuelle Version</a>
+        </div>
+
+        <div class="status-strip" id="statusStrip">
+          Bereit. Für Transkription und KI-Bewertung braucht diese Version einen Backend-Endpunkt.
+        </div>
+
+        <form id="assessmentForm" class="grid-form">
+          <section class="panel meta-panel" aria-labelledby="meta-title">
+            <h2 id="meta-title">Prüfung</h2>
+            <div class="meta-grid">
+              <label>
+                <span>Kandidat:in</span>
+                <input id="studentName" type="text" autocomplete="off">
+              </label>
+              <label>
+                <span>Datum</span>
+                <input id="assessmentDate" type="date">
+              </label>
+            </div>
+            <label>
+              <span>Backend-Endpunkt</span>
+              <input id="endpointUrl" type="url" placeholder="https://…/api/muendliche-pruefung">
+            </label>
+          </section>
+
+          <section class="panel upload-panel" aria-labelledby="upload-title">
+            <h2 id="upload-title">Material</h2>
+            <div class="upload-grid">
+              <label class="file-field">
+                <span>Textstelle</span>
+                <input id="passageFile" type="file" accept=".txt,.md,.pdf,.doc,.docx,text/plain,application/pdf">
+                <small id="passageInfo">Keine Datei gewählt.</small>
+              </label>
+              <label class="file-field">
+                <span>Gesamtes Werk</span>
+                <input id="workFile" type="file" accept=".txt,.md,.pdf,.doc,.docx,text/plain,application/pdf">
+                <small id="workInfo">Keine Datei gewählt.</small>
+              </label>
+            </div>
+            <label>
+              <span>Notizen zur Aufgabenstellung</span>
+              <textarea id="taskNotes" rows="5" placeholder="Fragestellung, Schwerpunkt, Kontext …"></textarea>
+            </label>
+          </section>
+
+          <section class="panel recorder-panel" aria-labelledby="record-title">
+            <div class="panel-header">
+              <h2 id="record-title">Aufnahme</h2>
+              <div class="timer" id="timer">00:00</div>
+            </div>
+            <div class="record-controls">
+              <button type="button" id="recordButton">Aufnahme starten</button>
+              <button type="button" id="stopButton" disabled>Stoppen</button>
+              <button type="button" id="speechButton">Live-Transkript</button>
+            </div>
+            <audio id="audioPlayer" controls></audio>
+            <p class="hint" id="speechHint">Live-Transkript nutzt die Spracherkennung des Browsers, falls verfügbar.</p>
+          </section>
+
+          <section class="panel transcript-panel" aria-labelledby="transcript-title">
+            <h2 id="transcript-title">Transkript</h2>
+            <textarea id="transcript" rows="12" placeholder="Transkript erscheint hier oder kann manuell eingefügt werden."></textarea>
+            <div class="inline-actions">
+              <button type="button" id="transcribeButton">Audio transkribieren</button>
+              <button type="button" id="evaluateButton">Transkript bewerten</button>
+            </div>
+          </section>
+
+          <section class="panel results-panel" aria-labelledby="result-title">
+            <div class="panel-header">
+              <h2 id="result-title">Bewertung</h2>
+              <strong class="final-grade" id="finalGrade">–</strong>
+            </div>
+            <div class="rubric-list" id="rubricList"></div>
+            <label>
+              <span>Gesamtkommentar</span>
+              <textarea id="overallComment" rows="5"></textarea>
+            </label>
+            <div class="inline-actions">
+              <button type="button" id="exportButton">Export</button>
+              <button type="button" id="clearButton">Clear</button>
+            </div>
+          </section>
+        </form>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

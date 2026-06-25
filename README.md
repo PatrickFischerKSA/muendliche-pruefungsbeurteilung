@@ -15,6 +15,7 @@ Statisches, GitHub-Pages-fähiges Formular auf Basis der PDF-Vorlage `Mündliche
 - Export der Beurteilung als JSON-Datei
 - Druckansicht beziehungsweise Speichern als PDF über den Browser
 - Lokales Zwischenspeichern im Browser
+- Zweite Version mit Upload, Aufnahme, Transkript und Backend-Anschluss unter `ki-version/`
 
 ## Berechnung
 
