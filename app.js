@@ -74,11 +74,13 @@ function safeFileName(value) {
   return (value || "muendliche-pruefung").trim().replace(/[^a-z0-9_-]+/gi, "-");
 }
 
-function exportEndpoint() {
-  if (window.location.hostname.endsWith("github.io")) {
-    return "https://muendliche-pruefungsbeurteilung.vercel.app/api/export-word";
-  }
-  return `${window.location.origin}/api/export-word`;
+function escapeXml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
 }
 
 function downloadBlob(blob, filename) {
@@ -91,14 +93,142 @@ function downloadBlob(blob, filename) {
   window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
 
-async function requestWordExport(payload) {
-  const response = await fetch(exportEndpoint(), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+function xmlText(text) {
+  return escapeXml(text || "–")
+    .split(/\r?\n/)
+    .map((line) => `<w:t>${line || " "}</w:t>`)
+    .join("<w:br/>");
+}
+
+function docParagraph(text, style = "") {
+  const styleXml = style ? `<w:pPr><w:pStyle w:val="${style}"/></w:pPr>` : "";
+  return `<w:p>${styleXml}<w:r>${xmlText(text)}</w:r></w:p>`;
+}
+
+function docTable(headers, rows) {
+  const rowXml = [headers, ...rows]
+    .map(
+      (row, rowIndex) =>
+        `<w:tr>${row
+          .map(
+            (value) =>
+              `<w:tc><w:tcPr><w:tcW w:w="2400" w:type="dxa"/></w:tcPr><w:p><w:r>${
+                rowIndex === 0 ? "<w:rPr><w:b/></w:rPr>" : ""
+              }${xmlText(value)}</w:r></w:p></w:tc>`
+          )
+          .join("")}</w:tr>`
+    )
+    .join("");
+  return `<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders><w:top w:val="single" w:sz="6"/><w:left w:val="single" w:sz="6"/><w:bottom w:val="single" w:sz="6"/><w:right w:val="single" w:sz="6"/><w:insideH w:val="single" w:sz="6"/><w:insideV w:val="single" w:sz="6"/></w:tblBorders></w:tblPr>${rowXml}</w:tbl>`;
+}
+
+function crc32(bytes) {
+  let crc = -1;
+  for (const byte of bytes) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+  }
+  return (crc ^ -1) >>> 0;
+}
+
+function writeString(view, offset, value) {
+  for (let index = 0; index < value.length; index += 1) view.setUint8(offset + index, value.charCodeAt(index));
+}
+
+function createZip(files) {
+  const encoder = new TextEncoder();
+  const entries = files.map((file) => ({
+    nameBytes: encoder.encode(file.name),
+    data: encoder.encode(file.content),
+    name: file.name,
+  }));
+  let localSize = 0;
+  let centralSize = 0;
+  entries.forEach((entry) => {
+    entry.crc = crc32(entry.data);
+    entry.offset = localSize;
+    localSize += 30 + entry.nameBytes.length + entry.data.length;
+    centralSize += 46 + entry.nameBytes.length;
   });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  downloadBlob(await response.blob(), payload.filename);
+  const output = new Uint8Array(localSize + centralSize + 22);
+  const view = new DataView(output.buffer);
+  let offset = 0;
+  entries.forEach((entry) => {
+    view.setUint32(offset, 0x04034b50, true);
+    view.setUint16(offset + 4, 20, true);
+    view.setUint16(offset + 6, 0, true);
+    view.setUint16(offset + 8, 0, true);
+    view.setUint32(offset + 10, 0, true);
+    view.setUint32(offset + 14, entry.crc, true);
+    view.setUint32(offset + 18, entry.data.length, true);
+    view.setUint32(offset + 22, entry.data.length, true);
+    view.setUint16(offset + 26, entry.nameBytes.length, true);
+    output.set(entry.nameBytes, offset + 30);
+    output.set(entry.data, offset + 30 + entry.nameBytes.length);
+    offset += 30 + entry.nameBytes.length + entry.data.length;
+  });
+  const centralOffset = offset;
+  entries.forEach((entry) => {
+    view.setUint32(offset, 0x02014b50, true);
+    view.setUint16(offset + 4, 20, true);
+    view.setUint16(offset + 6, 20, true);
+    view.setUint16(offset + 8, 0, true);
+    view.setUint16(offset + 10, 0, true);
+    view.setUint32(offset + 12, 0, true);
+    view.setUint32(offset + 16, entry.crc, true);
+    view.setUint32(offset + 20, entry.data.length, true);
+    view.setUint32(offset + 24, entry.data.length, true);
+    view.setUint16(offset + 28, entry.nameBytes.length, true);
+    view.setUint32(offset + 42, entry.offset, true);
+    output.set(entry.nameBytes, offset + 46);
+    offset += 46 + entry.nameBytes.length;
+  });
+  view.setUint32(offset, 0x06054b50, true);
+  view.setUint16(offset + 8, entries.length, true);
+  view.setUint16(offset + 10, entries.length, true);
+  view.setUint32(offset + 12, centralSize, true);
+  view.setUint32(offset + 16, centralOffset, true);
+  return output;
+}
+
+function createManualDocx(payload) {
+  const rows = payload.criteria.map((entry) => [
+    entry.criterion,
+    entry.help,
+    entry.score == null ? "–" : String(entry.score),
+    entry.level || "nicht bewertet",
+  ]);
+  const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    ${docParagraph("Beurteilung mündlicher Prüfungen", "Title")}
+    ${docParagraph(`Kandidat:in: ${payload.studentName || "–"}`)}
+    ${docParagraph(`Datum: ${payload.assessmentDate || "–"}`)}
+    ${docParagraph(`Exportiert am: ${new Date().toLocaleString("de-CH")}`)}
+    ${docParagraph("Ergebnis", "Heading1")}
+    ${docParagraph(`Schweizer Note: ${payload.grade}`)}
+    ${docParagraph(`Punktedurchschnitt: ${payload.average}; ungerundete Note: ${payload.rawGrade}; Rundung: mathematisch auf halbe Noten.`)}
+    ${docParagraph("Kriterien", "Heading1")}
+    ${docTable(["Kriterium", "Orientierung", "Punkte", "Stufe"], rows)}
+    ${docParagraph("Kommentar", "Heading1")}
+    ${docParagraph(payload.comment || "–")}
+    <w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr>
+  </w:body>
+</w:document>`;
+  const files = [
+    {
+      name: "[Content_Types].xml",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`,
+    },
+    {
+      name: "_rels/.rels",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`,
+    },
+    { name: "word/document.xml", content: documentXml },
+  ];
+  return new Blob([createZip(files)], {
+    type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  });
 }
 
 function saveState() {
@@ -226,7 +356,7 @@ clearButton.addEventListener("click", () => {
   syncForm();
 });
 
-exportButton.addEventListener("click", async () => {
+exportButton.addEventListener("click", () => {
   const selectedScores = state.scores.map((levelIndex, criterionIndex) => ({
     criterion: criteria[criterionIndex].title,
     help: criteria[criterionIndex].help,
@@ -240,10 +370,7 @@ exportButton.addEventListener("click", async () => {
       : completed.reduce((sum, entry) => sum + entry.score, 0) / completed.length;
   const swissGrade = average === null ? null : pointsToSwissGrade(average);
   const roundedGrade = swissGrade === null ? null : roundToStep(swissGrade, gradeRoundingStep);
-  exportButton.disabled = true;
-  try {
-    await requestWordExport({
-      type: "manual",
+  const payload = {
       filename: `${safeFileName(state.studentName)}-beurteilung.docx`,
       studentName: state.studentName,
       assessmentDate: state.assessmentDate,
@@ -252,12 +379,8 @@ exportButton.addEventListener("click", async () => {
       rawGrade: formatGrade(swissGrade),
       grade: formatGrade(roundedGrade),
       criteria: selectedScores,
-    });
-  } catch (error) {
-    window.alert(`Word-Export fehlgeschlagen: ${error.message}`);
-  } finally {
-    exportButton.disabled = false;
-  }
+  };
+  downloadBlob(createManualDocx(payload), payload.filename);
 });
 
 printButton.addEventListener("click", () => {
