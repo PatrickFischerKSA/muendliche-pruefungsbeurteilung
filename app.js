@@ -70,43 +70,18 @@ function pointsToSwissGrade(pointsAverage) {
   return 1 + ((pointsAverage - 1) * 5) / 4;
 }
 
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
-}
-
-function nl2br(value) {
-  return escapeHtml(value).replaceAll("\n", "<br>");
-}
-
 function safeFileName(value) {
   return (value || "muendliche-pruefung").trim().replace(/[^a-z0-9_-]+/gi, "-");
 }
 
-function downloadWordDocument({ filename, title, body }) {
-  const html = `<!doctype html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" lang="de">
-<head>
-  <meta charset="utf-8">
-  <title>${escapeHtml(title)}</title>
-  <style>
-    body { font-family: Arial, sans-serif; color: #1f252d; line-height: 1.45; }
-    h1 { font-size: 24pt; margin: 0 0 16pt; }
-    h2 { font-size: 15pt; margin: 18pt 0 8pt; }
-    table { border-collapse: collapse; width: 100%; margin: 10pt 0 16pt; }
-    th, td { border: 1px solid #9aa6b2; padding: 6pt; vertical-align: top; }
-    th { background: #eef3f5; font-weight: bold; }
-    .meta { margin-bottom: 14pt; }
-    .grade { font-size: 18pt; font-weight: bold; }
-    .muted { color: #5f6c78; }
-  </style>
-</head>
-<body>${body}</body>
-</html>`;
-  const blob = new Blob(["\ufeff", html], { type: "application/msword;charset=utf-8" });
+function exportEndpoint() {
+  if (window.location.hostname.endsWith("github.io")) {
+    return "https://muendliche-pruefungsbeurteilung.vercel.app/api/export-word";
+  }
+  return `${window.location.origin}/api/export-word`;
+}
+
+function downloadBlob(blob, filename) {
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = filename;
@@ -114,6 +89,16 @@ function downloadWordDocument({ filename, title, body }) {
   link.click();
   link.remove();
   window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+}
+
+async function requestWordExport(payload) {
+  const response = await fetch(exportEndpoint(), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  downloadBlob(await response.blob(), payload.filename);
 }
 
 function saveState() {
@@ -241,55 +226,38 @@ clearButton.addEventListener("click", () => {
   syncForm();
 });
 
-exportButton.addEventListener("click", () => {
+exportButton.addEventListener("click", async () => {
   const selectedScores = state.scores.map((levelIndex, criterionIndex) => ({
-    kriterium: criteria[criterionIndex].title,
-    orientierung: criteria[criterionIndex].help,
-    punkte: levelIndex === null ? null : levels[levelIndex].value,
-    stufe: levelIndex === null ? null : criteria[criterionIndex].levels[levelIndex],
+    criterion: criteria[criterionIndex].title,
+    help: criteria[criterionIndex].help,
+    score: levelIndex === null ? null : levels[levelIndex].value,
+    level: levelIndex === null ? null : criteria[criterionIndex].levels[levelIndex],
   }));
-  const completed = selectedScores.filter((entry) => entry.punkte !== null);
+  const completed = selectedScores.filter((entry) => entry.score !== null);
   const average =
     completed.length === 0
       ? null
-      : completed.reduce((sum, entry) => sum + entry.punkte, 0) / completed.length;
+      : completed.reduce((sum, entry) => sum + entry.score, 0) / completed.length;
   const swissGrade = average === null ? null : pointsToSwissGrade(average);
   const roundedGrade = swissGrade === null ? null : roundToStep(swissGrade, gradeRoundingStep);
-  const rows = selectedScores
-    .map(
-      (entry) => `<tr>
-        <td>${escapeHtml(entry.kriterium)}</td>
-        <td>${escapeHtml(entry.orientierung)}</td>
-        <td>${entry.punkte === null ? "–" : escapeHtml(entry.punkte)}</td>
-        <td>${escapeHtml(entry.stufe || "nicht bewertet")}</td>
-      </tr>`
-    )
-    .join("");
-  const body = `
-    <h1>Beurteilung mündlicher Prüfungen</h1>
-    <div class="meta">
-      <p><strong>Kandidat:in:</strong> ${escapeHtml(state.studentName || "–")}</p>
-      <p><strong>Datum:</strong> ${escapeHtml(state.assessmentDate || "–")}</p>
-      <p><strong>Exportiert am:</strong> ${escapeHtml(new Date().toLocaleString("de-CH"))}</p>
-    </div>
-    <h2>Ergebnis</h2>
-    <p class="grade">Schweizer Note: ${escapeHtml(formatGrade(roundedGrade))}</p>
-    <p class="muted">Punktedurchschnitt: ${escapeHtml(formatGrade(average))}; ungerundete Note: ${escapeHtml(formatGrade(swissGrade))}; Rundung: mathematisch auf halbe Noten.</p>
-    <h2>Kriterien</h2>
-    <table>
-      <thead>
-        <tr><th>Kriterium</th><th>Orientierung</th><th>Punkte</th><th>Stufe</th></tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <h2>Kommentar</h2>
-    <p>${nl2br(state.comment || "–")}</p>
-  `;
-  downloadWordDocument({
-    filename: `${safeFileName(state.studentName)}-beurteilung.doc`,
-    title: "Beurteilung mündlicher Prüfungen",
-    body,
-  });
+  exportButton.disabled = true;
+  try {
+    await requestWordExport({
+      type: "manual",
+      filename: `${safeFileName(state.studentName)}-beurteilung.docx`,
+      studentName: state.studentName,
+      assessmentDate: state.assessmentDate,
+      comment: state.comment,
+      average: formatGrade(average),
+      rawGrade: formatGrade(swissGrade),
+      grade: formatGrade(roundedGrade),
+      criteria: selectedScores,
+    });
+  } catch (error) {
+    window.alert(`Word-Export fehlgeschlagen: ${error.message}`);
+  } finally {
+    exportButton.disabled = false;
+  }
 });
 
 printButton.addEventListener("click", () => {

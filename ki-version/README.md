@@ -10,7 +10,7 @@ Diese zweite Version erweitert die manuelle Beurteilung um:
 - Vorbereitung für Transkription und KI-Bewertung über einen Backend-Endpunkt
 - Bewertung nach denselben fünf Kriterien wie die erste Fassung
 - Bewertung mit hinterlegten Interpretationsparadigmen zu Argumentationslehre und literarischer Textkommentierung
-- Export als Word-kompatible `.doc`-Datei
+- Export als echte Word-Datei (`.docx`)
 
 ## Wichtiger Architekturhinweis
 

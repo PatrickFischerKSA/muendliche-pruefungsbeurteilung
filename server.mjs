@@ -4,6 +4,17 @@ import cors from "cors";
 import multer from "multer";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  Document,
+  HeadingLevel,
+  Packer,
+  Paragraph,
+  Table,
+  TableCell,
+  TableRow,
+  TextRun,
+  WidthType,
+} from "docx";
 import { interpretationParadigms } from "./interpretationsparadigmen.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -64,6 +75,110 @@ function clampScore(value) {
   const score = Number(value);
   if (!Number.isFinite(score)) return null;
   return Math.max(1, Math.min(5, Math.round(score)));
+}
+
+function textValue(value, fallback = "-") {
+  if (value == null || value === "") return fallback;
+  return String(value);
+}
+
+function paragraph(text = "", options = {}) {
+  return new Paragraph({
+    ...options,
+    children: [new TextRun(textValue(text, ""))],
+  });
+}
+
+function heading(text, level = HeadingLevel.HEADING_2) {
+  return paragraph(text, {
+    heading: level,
+    spacing: { before: 280, after: 120 },
+  });
+}
+
+function cell(text, bold = false) {
+  return new TableCell({
+    children: [
+      new Paragraph({
+        children: [new TextRun({ text: textValue(text), bold })],
+      }),
+    ],
+  });
+}
+
+function table(headers, rows) {
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: [
+      new TableRow({
+        children: headers.map((header) => cell(header, true)),
+      }),
+      ...rows.map(
+        (row) =>
+          new TableRow({
+            children: row.map((value) => cell(value)),
+          })
+      ),
+    ],
+  });
+}
+
+function buildWordDocument(payload) {
+  const isKi = payload.type === "ki";
+  const title = isKi ? "KI-gestützte Prüfungsbeurteilung" : "Beurteilung mündlicher Prüfungen";
+  const children = [
+    heading(title, HeadingLevel.TITLE),
+    paragraph(`Kandidat:in: ${textValue(payload.studentName)}`),
+    paragraph(`Datum: ${textValue(payload.assessmentDate)}`),
+    paragraph(`Exportiert am: ${new Date().toLocaleString("de-CH")}`),
+    heading("Ergebnis"),
+    paragraph(`Schweizer Note: ${textValue(payload.grade)}`),
+    paragraph(`Punktedurchschnitt: ${textValue(payload.average)}; ungerundete Note: ${textValue(payload.rawGrade)}; Rundung: mathematisch auf halbe Noten.`),
+  ];
+
+  if (isKi) {
+    children.push(
+      paragraph(`Textstelle: ${textValue(payload.passageFile)}`),
+      paragraph(`Gesamtes Werk: ${textValue(payload.workFile)}`)
+    );
+  }
+
+  children.push(
+    heading(isKi ? "Bewertung nach Kriterien" : "Kriterien"),
+    table(
+      isKi ? ["Kriterium", "Punkte", "Stufe", "Begründung"] : ["Kriterium", "Orientierung", "Punkte", "Stufe"],
+      (payload.criteria || []).map((entry) =>
+        isKi
+          ? [entry.criterion, entry.score, entry.level, entry.comment]
+          : [entry.criterion, entry.help, entry.score, entry.level]
+      )
+    ),
+    heading(isKi ? "Gesamtkommentar" : "Kommentar"),
+    paragraph(payload.overallComment || payload.comment || "-")
+  );
+
+  if (isKi) {
+    children.push(
+      heading("Notizen zur Aufgabenstellung"),
+      paragraph(payload.taskNotes || "-"),
+      heading("Transkript"),
+      paragraph(payload.transcript || "-")
+    );
+  }
+
+  return new Document({
+    sections: [
+      {
+        properties: {},
+        children,
+      },
+    ],
+  });
+}
+
+async function createWordBuffer(payload) {
+  const document = buildWordDocument(payload);
+  return Packer.toBuffer(document);
 }
 
 function fileByField(req, fieldname) {
@@ -318,6 +433,18 @@ app.post(
     }
   }
 );
+
+app.post("/api/export-word", async (req, res, next) => {
+  try {
+    const buffer = await createWordBuffer(req.body || {});
+    const filename = req.body?.filename || "pruefungsbeurteilung.docx";
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename.replace(/[^a-zA-Z0-9_.-]/g, "-")}"`);
+    res.send(buffer);
+  } catch (error) {
+    next(error);
+  }
+});
 
 app.use((error, req, res, next) => {
   console.error(error);
