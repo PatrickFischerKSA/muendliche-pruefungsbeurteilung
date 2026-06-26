@@ -88,6 +88,52 @@ function roundToStep(value, step) {
   return Math.round(value / step) * step;
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function nl2br(value) {
+  return escapeHtml(value).replaceAll("\n", "<br>");
+}
+
+function safeFileName(value) {
+  return (value || "ki-pruefungsbeurteilung").trim().replace(/[^a-z0-9_-]+/gi, "-");
+}
+
+function downloadWordDocument({ filename, title, body }) {
+  const html = `<!doctype html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>${escapeHtml(title)}</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #1f252d; line-height: 1.45; }
+    h1 { font-size: 24pt; margin: 0 0 16pt; }
+    h2 { font-size: 15pt; margin: 18pt 0 8pt; }
+    table { border-collapse: collapse; width: 100%; margin: 10pt 0 16pt; }
+    th, td { border: 1px solid #9aa6b2; padding: 6pt; vertical-align: top; }
+    th { background: #eef3f5; font-weight: bold; }
+    .meta { margin-bottom: 14pt; }
+    .grade { font-size: 18pt; font-weight: bold; }
+    .muted { color: #5f6c78; }
+  </style>
+</head>
+<body>${body}</body>
+</html>`;
+  const blob = new Blob(["\ufeff", html], { type: "application/msword;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+}
+
 function renderEmptyRubric() {
   els.rubricList.innerHTML = "";
   criteria.forEach((criterion) => {
@@ -396,28 +442,59 @@ async function finishIntegratedExam() {
 }
 
 function exportData() {
-  const payload = {
-    studentName: els.studentName.value,
-    assessmentDate: els.assessmentDate.value,
-    taskNotes: els.taskNotes.value,
-    transcript: els.transcript.value,
-    overallComment: els.overallComment.value,
-    backendResult: state.result,
-    files: {
-      passage: els.passageFile.files[0]?.name || null,
-      work: els.workFile.files[0]?.name || null,
-      audioType: state.audioMimeType || null,
-    },
-    exportedAt: new Date().toISOString(),
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "ki-pruefungsbeurteilung.json";
-  document.body.append(link);
-  link.click();
-  link.remove();
-  window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  const assessment = state.result?.assessment || state.result?.bewertung || [];
+  const scores = [];
+  const rows = criteria
+    .map((criterion) => {
+      const entry = assessment.find((item) => item.criterion === criterion.title || item.kriterium === criterion.title) || {};
+      const score = Number(entry.score ?? entry.punkte);
+      if (Number.isFinite(score)) scores.push(score);
+      const levelText = Number.isFinite(score)
+        ? criterion.levels[Math.max(0, Math.min(4, Math.round(score) - 1))]
+        : "nicht bewertet";
+      const comment = entry.comment || entry.begruendung || entry.evidence || "Keine Begründung vorhanden.";
+      return `<tr>
+        <td>${escapeHtml(criterion.title)}</td>
+        <td>${Number.isFinite(score) ? escapeHtml(score) : "–"}</td>
+        <td>${escapeHtml(levelText)}</td>
+        <td>${nl2br(comment)}</td>
+      </tr>`;
+    })
+    .join("");
+  const average = scores.length === criteria.length ? scores.reduce((sum, score) => sum + score, 0) / scores.length : null;
+  const swissGrade = average === null ? null : pointsToSwissGrade(average);
+  const roundedGrade = swissGrade === null ? null : roundToStep(swissGrade, gradeRoundingStep);
+  const body = `
+    <h1>KI-gestützte Prüfungsbeurteilung</h1>
+    <div class="meta">
+      <p><strong>Kandidat:in:</strong> ${escapeHtml(els.studentName.value || "–")}</p>
+      <p><strong>Datum:</strong> ${escapeHtml(els.assessmentDate.value || "–")}</p>
+      <p><strong>Textstelle:</strong> ${escapeHtml(els.passageFile.files[0]?.name || "–")}</p>
+      <p><strong>Gesamtes Werk:</strong> ${escapeHtml(els.workFile.files[0]?.name || "–")}</p>
+      <p><strong>Exportiert am:</strong> ${escapeHtml(new Date().toLocaleString("de-CH"))}</p>
+    </div>
+    <h2>Ergebnis</h2>
+    <p class="grade">Schweizer Note: ${escapeHtml(formatGrade(roundedGrade))}</p>
+    <p class="muted">Punktedurchschnitt: ${escapeHtml(formatGrade(average))}; ungerundete Note: ${escapeHtml(formatGrade(swissGrade))}; Rundung: mathematisch auf halbe Noten.</p>
+    <h2>Bewertung nach Kriterien</h2>
+    <table>
+      <thead>
+        <tr><th>Kriterium</th><th>Punkte</th><th>Stufe</th><th>Begründung</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <h2>Gesamtkommentar</h2>
+    <p>${nl2br(els.overallComment.value || "–")}</p>
+    <h2>Notizen zur Aufgabenstellung</h2>
+    <p>${nl2br(els.taskNotes.value || "–")}</p>
+    <h2>Transkript</h2>
+    <p>${nl2br(els.transcript.value || "–")}</p>
+  `;
+  downloadWordDocument({
+    filename: `${safeFileName(els.studentName.value)}-ki-pruefungsbeurteilung.doc`,
+    title: "KI-gestützte Prüfungsbeurteilung",
+    body,
+  });
 }
 
 function clearForm() {

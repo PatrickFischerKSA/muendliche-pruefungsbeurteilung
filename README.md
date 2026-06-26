@@ -12,7 +12,7 @@ Statisches, GitHub-Pages-fähiges Formular auf Basis der PDF-Vorlage `Mündliche
 - Gleichgewichtete Kriterien
 - Mathematische Rundung auf halbe Noten
 - Kommentar- und Namensfeld
-- Export der Beurteilung als JSON-Datei
+- Export der Beurteilung als Word-kompatible `.doc`-Datei
 - Druckansicht beziehungsweise Speichern als PDF über den Browser
 - Lokales Zwischenspeichern im Browser
 - Zweite Version mit Upload, Aufnahme, Transkript und Backend-Anschluss unter `ki-version/`

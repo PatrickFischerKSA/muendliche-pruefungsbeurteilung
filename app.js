@@ -70,6 +70,52 @@ function pointsToSwissGrade(pointsAverage) {
   return 1 + ((pointsAverage - 1) * 5) / 4;
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function nl2br(value) {
+  return escapeHtml(value).replaceAll("\n", "<br>");
+}
+
+function safeFileName(value) {
+  return (value || "muendliche-pruefung").trim().replace(/[^a-z0-9_-]+/gi, "-");
+}
+
+function downloadWordDocument({ filename, title, body }) {
+  const html = `<!doctype html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>${escapeHtml(title)}</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #1f252d; line-height: 1.45; }
+    h1 { font-size: 24pt; margin: 0 0 16pt; }
+    h2 { font-size: 15pt; margin: 18pt 0 8pt; }
+    table { border-collapse: collapse; width: 100%; margin: 10pt 0 16pt; }
+    th, td { border: 1px solid #9aa6b2; padding: 6pt; vertical-align: top; }
+    th { background: #eef3f5; font-weight: bold; }
+    .meta { margin-bottom: 14pt; }
+    .grade { font-size: 18pt; font-weight: bold; }
+    .muted { color: #5f6c78; }
+  </style>
+</head>
+<body>${body}</body>
+</html>`;
+  const blob = new Blob(["\ufeff", html], { type: "application/msword;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+}
+
 function saveState() {
   localStorage.setItem(storageKey, JSON.stringify(state));
 }
@@ -209,27 +255,41 @@ exportButton.addEventListener("click", () => {
       : completed.reduce((sum, entry) => sum + entry.punkte, 0) / completed.length;
   const swissGrade = average === null ? null : pointsToSwissGrade(average);
   const roundedGrade = swissGrade === null ? null : roundToStep(swissGrade, gradeRoundingStep);
-  const payload = {
-    name: state.studentName,
-    datum: state.assessmentDate,
-    kommentar: state.comment,
-    rundung: "mathematisch auf halbe Noten",
-    rundungsschritt: gradeRoundingStep,
-    punktedurchschnitt: average,
-    noteUngerundet: swissGrade,
-    note: roundedGrade,
-    kriterien: selectedScores,
-    exportiertAm: new Date().toISOString(),
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-  const link = document.createElement("a");
-  const safeName = (state.studentName || "muendliche-pruefung").trim().replace(/[^a-z0-9_-]+/gi, "-");
-  link.href = URL.createObjectURL(blob);
-  link.download = `${safeName}-beurteilung.json`;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  const rows = selectedScores
+    .map(
+      (entry) => `<tr>
+        <td>${escapeHtml(entry.kriterium)}</td>
+        <td>${escapeHtml(entry.orientierung)}</td>
+        <td>${entry.punkte === null ? "–" : escapeHtml(entry.punkte)}</td>
+        <td>${escapeHtml(entry.stufe || "nicht bewertet")}</td>
+      </tr>`
+    )
+    .join("");
+  const body = `
+    <h1>Beurteilung mündlicher Prüfungen</h1>
+    <div class="meta">
+      <p><strong>Kandidat:in:</strong> ${escapeHtml(state.studentName || "–")}</p>
+      <p><strong>Datum:</strong> ${escapeHtml(state.assessmentDate || "–")}</p>
+      <p><strong>Exportiert am:</strong> ${escapeHtml(new Date().toLocaleString("de-CH"))}</p>
+    </div>
+    <h2>Ergebnis</h2>
+    <p class="grade">Schweizer Note: ${escapeHtml(formatGrade(roundedGrade))}</p>
+    <p class="muted">Punktedurchschnitt: ${escapeHtml(formatGrade(average))}; ungerundete Note: ${escapeHtml(formatGrade(swissGrade))}; Rundung: mathematisch auf halbe Noten.</p>
+    <h2>Kriterien</h2>
+    <table>
+      <thead>
+        <tr><th>Kriterium</th><th>Orientierung</th><th>Punkte</th><th>Stufe</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <h2>Kommentar</h2>
+    <p>${nl2br(state.comment || "–")}</p>
+  `;
+  downloadWordDocument({
+    filename: `${safeFileName(state.studentName)}-beurteilung.doc`,
+    title: "Beurteilung mündlicher Prüfungen",
+    body,
+  });
 });
 
 printButton.addEventListener("click", () => {
